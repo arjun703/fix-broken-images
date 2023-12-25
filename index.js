@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 
 let all_images = [];
 
-fs.readFile('products.json', 'utf8', (err, data) => {
+fs.readFile('posts.json', 'utf8', (err, data) => {
   if (err) {
     console.error('Error reading file:', err);
     return;
@@ -11,42 +11,23 @@ fs.readFile('products.json', 'utf8', (err, data) => {
 
   try {
     const products = JSON.parse(data);
-    const finalOutput = products.reduce((arr, { id, custom_url, custom_fields }) => {
-      const shortDescriptions = (custom_fields || [])
-        .filter(({ name }) => name === 'short_description')
-        .map(({ value }) => value)
-        .join('');
-
-        url = 'https://gomers-inc-missoula.mybigcommerce.com'+custom_url.url
-
-      if (shortDescriptions.includes('img')) {
-         
-        const images = extractImageSrcs(shortDescriptions);
+    
+    products.foreach(product => {
       
-        all_images = all_images.concat(images);
+        const images = extractImageSrcs(content);
         
-        arr.push({ id, url, short_description: shortDescriptions, images });
+        if(product["Image URL"] != "") 
+          images[] = product["Image URL"]
+
+        all_images = all_images.concat(images);      
       
-      }
-
-      return arr;
-
-    }, []);
+    });
 
     // Deduplicate images
     // all_images  = all_images.map(img => img.replace(/\s/g, '').replace(/^(\.\.)/, ''));
 
 
     let unique_images = [...new Set(all_images)];
-
-    unique_images = unique_images.filter(img => !(img.includes('cdn') || img.includes('stencil')))
-
-    console.log('total products containing images', finalOutput.length)
-
-    console.log('Total number of images:', all_images.length);
-    
-    console.log('Number of unique images:', unique_images.length);
-    
 
     fs.writeFileSync('all_unique_images.json', JSON.stringify(unique_images, null, 2));
 
