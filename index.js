@@ -15,7 +15,7 @@ fs.readFile('products.json', 'utf8', (err, data) => {
       const shortDescriptions = (custom_fields || [])
         .filter(({ name }) => name === 'short_description')
         .map(({ value }) => value)
-        .join(' ');
+        .join('');
 
         url = 'https://gomers-inc-missoula.mybigcommerce.com'+custom_url.url
 
