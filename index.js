@@ -20,7 +20,7 @@ fs.readFile('products.json', 'utf8', (err, data) => {
         url = 'https://gomers-inc-missoula.mybigcommerce.com'+custom_url.url
 
       if (shortDescriptions.includes('img')) {
-
+         
         const images = extractImageSrcs(shortDescriptions);
       
         all_images = all_images.concat(images);
