@@ -9,16 +9,18 @@ fs.readFile('posts.json', 'utf8', (err, data) => {
     return;
   }
 
+  const imageMap = fs.readFileSync('yourFileName.txt', 'utf-8');
+  
   try {
 
     const products = JSON.parse(data);
     
     products.forEach(product => {
       
-        const images = extractImageSrcs(product.Content);
+        let images = extractImageSrcs(product.Content);
         
         if(product["Image URL"] != "") 
-          images.push(product["Image URL"])
+          images  = images.concat(product["Image URL"].split('|'))
 
         all_images = all_images.concat(images);      
       

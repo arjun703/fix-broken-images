@@ -7,6 +7,8 @@ const brokenImagesFile = 'all_unique_images.json';
 const outputFolder = 'broken_images';
 const mappingFile = 'org_url_vs_new_img_name.json';
 
+failureURLs = [];
+
 // Read URLs from broken_images.json
 fs.readFile(brokenImagesFile, 'utf8', async (err, data) => {
   if (err) {
@@ -14,8 +16,13 @@ fs.readFile(brokenImagesFile, 'utf8', async (err, data) => {
     return;
   }
 
+  let success  = 0
+  let failure = 0 
+
   try {
-    const urls = JSON.parse(data);
+    let urls = JSON.parse(data);
+
+    // urls = urls.slice(50, 100)
 
     // Create folder if it doesn't exist
     if (!fs.existsSync(outputFolder)) {
@@ -31,21 +38,19 @@ fs.readFile(brokenImagesFile, 'utf8', async (err, data) => {
 
         originalUrl2 = originalUrl
 
-        let url = originalUrl.replace(/\s/g, '').replace(/^(\.\.)/, ''); // remove spaces and ..
-
-        if (!(url.includes('http'))) {
-          url = 'http://usdieselparts.com' + url; // append website name to those that don't have
-        }
-
-        console.log('originalurl2', originalUrl2)
-
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const response = await axios.get(originalUrl, {
+          responseType: 'arraybuffer',
+          headers: {
+            'Referer': 'http://your-referer-url.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+          }
+        });
 
         // Create a hash of the URL and trim to 15 characters
-        const hash = crypto.createHash('md5').update(url).digest('hex').slice(0, 15);
+        const hash = crypto.createHash('md5').update(originalUrl).digest('hex').slice(0, 15);
 
         // Determine file extension based on the content type
-        const extension = url.split('.').pop() || 'jpg';
+        const extension = originalUrl.split('.').pop() || 'jpg';
 
         // Create the new image name
         const newImageName = `${hash}.${extension}`;
@@ -55,11 +60,13 @@ fs.readFile(brokenImagesFile, 'utf8', async (err, data) => {
         fs.writeFileSync(imagePath, response.data);
 
         // Store the mapping between original URL and new image name with extension
-        mapping[originalUrl] = newImageName;
+        mapping[originalUrl] = 'https://cdn.shopify.com/s/files/1/0676/4000/0753/files/'+newImageName;
 
-        imagesDownloaded++;
+        success++;
         // console.log(`Downloaded ${imagesDownloaded} images.`);
       } catch (error) {
+        failure++
+        failureURLs.push(originalUrl)
         console.error(`Error processing URL ${originalUrl}:`, error.message);
       }
     }));
@@ -70,6 +77,8 @@ fs.readFile(brokenImagesFile, 'utf8', async (err, data) => {
         console.error('Error writing to org_url_vs_new_img_name.json:', err);
       } else {
         console.log('Mapping saved to org_url_vs_new_img_name.json');
+        console.log('success', success, 'failure', failure)
+        fs.writeFile('download_errors.json', JSON.stringify(failureURLs, null, 2), (err) => {})
       }
     });
   } catch (error) {
